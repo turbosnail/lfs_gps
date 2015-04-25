@@ -6,6 +6,7 @@ this tool create waypoints, relations and create path from 1st point to 2nd
 
 Done:
 - Waypoints creator (+move points)
+
 Undone:
 - Create relations
 - Store points with relation in json
