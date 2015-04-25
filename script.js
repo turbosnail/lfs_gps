@@ -220,20 +220,31 @@ function clearCanvas()
 {
     //gr.clear();
 
-    for(i in polygons)
-    {
-        polygons[i].remove()
-    }
-
     for(i in rects)
     {
         rects[i].remove()
     }
 
+    for(i in circles)
+    {
+        circles[i].remove()
+    }
 
-    points=new Array();
-    polygons = new Array();
-    rects = new Array();
+    for(i in polygons)
+    {
+        polygons[i].remove()
+    }
+
+    for(i in lines)
+    {
+        lines[i].remove()
+    }
+
+
+    rects = [];
+    circles=[];
+    polygons = [];
+    lines = [];
 }
 
 function clearPreviousPoints()
