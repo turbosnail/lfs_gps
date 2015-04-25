@@ -1,0 +1,216 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" >
+		<meta http-equiv="Content-Language" content="en">
+
+		<link rel="stylesheet" type="text/css" href="style.css" media="screen" >
+
+		<script src="http://code.jquery.com/jquery-1.11.1.min.js" type="text/javascript"></script>
+		<script src="jquery.mousewheel.min.js" type="text/javascript"></script>
+
+		<script src="jsDraw2DX_Uncompressed.js" type="text/javascript"></script>
+		<script src="script.js" type="text/javascript"></script>
+		<title>LFS GPS SVG</title>
+		<link href="/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+
+	</head>
+
+	<body>
+
+		<div id="canvas" style="width:2560px;height:2560px;"></div>
+
+		<div id="work">
+            <div class="control_block">
+                <label>Track:</label>
+                <select onchange="track(this.value)">
+                    <option>AS</option>
+                    <option>AU</option>
+                    <option>BL</option>
+                    <option>FE</option>
+                    <option>KY</option>
+                    <option>SO</option>
+                    <option>WE</option>
+                </select>
+            </div>
+            <div class="control_block">
+                <label>Color:</label>
+                <select id="color">
+                    <option	value='#F0F8FF' style="background-color: #F0F8FF;">AliceBlue</option>
+                    <option	value='#FAEBD7' style="background-color: #FAEBD7;">AntiqueWhite</option>
+                    <option	value='#00FFFF' style="background-color: #00FFFF;">Aqua</option>
+                    <option	value='#7FFFD4' style="background-color: #7FFFD4;">Aquamarine</option>
+                    <option	value='#F0FFFF' style="background-color: #F0FFFF;">Azure</option>
+                    <option	value='#F5F5DC' style="background-color: #F5F5DC;">Beige</option>
+                    <option	value='#FFE4C4' style="background-color: #FFE4C4;">Bisque</option>
+                    <option	value='#000000' style="background-color: #000000;">Black</option>
+                    <option	value='#FFEBCD' style="background-color: #FFEBCD;">BlanchedAlmond</option>
+                    <option	value='#0000FF' style="background-color: #0000FF;">Blue</option>
+                    <option	value='#8A2BE2' style="background-color: #8A2BE2;">BlueViolet</option>
+                    <option	value='#A52A2A' style="background-color: #A52A2A;">Brown</option>
+                    <option	value='#DEB887' style="background-color: #DEB887;">BurlyWood</option>
+                    <option	value='#5F9EA0' style="background-color: #5F9EA0;">CadetBlue</option>
+                    <option	value='#7FFF00' style="background-color: #7FFF00;">Chartreuse</option>
+                    <option	value='#D2691E' style="background-color: #D2691E;">Chocolate</option>
+                    <option	value='#FF7F50' style="background-color: #FF7F50;">Coral</option>
+                    <option	value='#6495ED' style="background-color: #6495ED;">CornflowerBlue</option>
+                    <option	value='#FFF8DC' style="background-color: #FFF8DC;">Cornsilk</option>
+                    <option	value='#DC143C' style="background-color: #DC143C;">Crimson</option>
+                    <option	value='#00FFFF' style="background-color: #00FFFF;">Cyan</option>
+                    <option	value='#00008B' style="background-color: #00008B;">DarkBlue</option>
+                    <option	value='#008B8B' style="background-color: #008B8B;">DarkCyan</option>
+                    <option	value='#B8860B' style="background-color: #B8860B;">DarkGoldenRod</option>
+                    <option	value='#A9A9A9' style="background-color: #A9A9A9;">DarkGray</option>
+                    <option	value='#006400' style="background-color: #006400;">DarkGreen</option>
+                    <option	value='#BDB76B' style="background-color: #BDB76B;">DarkKhaki</option>
+                    <option	value='#8B008B' style="background-color: #8B008B;">DarkMagenta</option>
+                    <option	value='#556B2F' style="background-color: #556B2F;">DarkOliveGreen</option>
+                    <option	value='#FF8C00' style="background-color: #FF8C00;">DarkOrange</option>
+                    <option	value='#9932CC' style="background-color: #9932CC;">DarkOrchid</option>
+                    <option	value='#8B0000' style="background-color: #8B0000;">DarkRed</option>
+                    <option	value='#E9967A' style="background-color: #E9967A;">DarkSalmon</option>
+                    <option	value='#8FBC8F' style="background-color: #8FBC8F;">DarkSeaGreen</option>
+                    <option	value='#483D8B' style="background-color: #483D8B;">DarkSlateBlue</option>
+                    <option	value='#2F4F4F' style="background-color: #2F4F4F;">DarkSlateGray</option>
+                    <option	value='#00CED1' style="background-color: #00CED1;">DarkTurquoise</option>
+                    <option	value='#9400D3' style="background-color: #9400D3;">DarkViolet</option>
+                    <option	value='#FF1493' style="background-color: #FF1493;">DeepPink</option>
+                    <option	value='#00BFFF' style="background-color: #00BFFF;">DeepSkyBlue</option>
+                    <option	value='#696969' style="background-color: #696969;">DimGray</option>
+                    <option	value='#1E90FF' style="background-color: #1E90FF;">DodgerBlue</option>
+                    <option	value='#B22222' style="background-color: #B22222;">FireBrick</option>
+                    <option	value='#FFFAF0' style="background-color: #FFFAF0;">FloralWhite</option>
+                    <option	value='#228B22' style="background-color: #228B22;">ForestGreen</option>
+                    <option	value='#FF00FF' style="background-color: #FF00FF;">Fuchsia</option>
+                    <option	value='#DCDCDC' style="background-color: #DCDCDC;">Gainsboro</option>
+                    <option	value='#F8F8FF' style="background-color: #F8F8FF;">GhostWhite</option>
+                    <option	value='#FFD700' style="background-color: #FFD700;">Gold</option>
+                    <option	value='#DAA520' style="background-color: #DAA520;">GoldenRod</option>
+                    <option	value='#808080' style="background-color: #808080;">Gray</option>
+                    <option	value='#008000' style="background-color: #008000;">Green</option>
+                    <option	value='#ADFF2F' style="background-color: #ADFF2F;">GreenYellow</option>
+                    <option	value='#F0FFF0' style="background-color: #F0FFF0;">HoneyDew</option>
+                    <option	value='#FF69B4' style="background-color: #FF69B4;">HotPink</option>
+                    <option	value='#CD5C5C' style="background-color: #CD5C5C;">IndianRed</option>
+                    <option	value='#4B0082' style="background-color: #4B0082;">Indigo</option>
+                    <option	value='#FFFFF0' style="background-color: #FFFFF0;">Ivory</option>
+                    <option	value='#F0E68C' style="background-color: #F0E68C;">Khaki</option>
+                    <option	value='#E6E6FA' style="background-color: #E6E6FA;">Lavender</option>
+                    <option	value='#FFF0F5' style="background-color: #FFF0F5;">LavenderBlush</option>
+                    <option	value='#7CFC00' style="background-color: #7CFC00;">LawnGreen</option>
+                    <option	value='#FFFACD' style="background-color: #FFFACD;">LemonChiffon</option>
+                    <option	value='#ADD8E6' style="background-color: #ADD8E6;">LightBlue</option>
+                    <option	value='#F08080' style="background-color: #F08080;">LightCoral</option>
+                    <option	value='#E0FFFF' style="background-color: #E0FFFF;">LightCyan</option>
+                    <option	value='#FAFAD2' style="background-color: #FAFAD2;">LightGoldenRodYellow</option>
+                    <option	value='#D3D3D3' style="background-color: #D3D3D3;">LightGray</option>
+                    <option	value='#90EE90' style="background-color: #90EE90;">LightGreen</option>
+                    <option	value='#FFB6C1' style="background-color: #FFB6C1;">LightPink</option>
+                    <option	value='#FFA07A' style="background-color: #FFA07A;">LightSalmon</option>
+                    <option	value='#20B2AA' style="background-color: #20B2AA;">LightSeaGreen</option>
+                    <option	value='#87CEFA' style="background-color: #87CEFA;">LightSkyBlue</option>
+                    <option	value='#778899' style="background-color: #778899;">LightSlateGray</option>
+                    <option	value='#B0C4DE' style="background-color: #B0C4DE;">LightSteelBlue</option>
+                    <option	value='#FFFFE0' style="background-color: #FFFFE0;">LightYellow</option>
+                    <option	value='#00FF00' style="background-color: #00FF00;">Lime</option>
+                    <option	value='#32CD32' style="background-color: #32CD32;">LimeGreen</option>
+                    <option	value='#FAF0E6' style="background-color: #FAF0E6;">Linen</option>
+                    <option	value='#FF00FF' style="background-color: #FF00FF;">Magenta</option>
+                    <option	value='#800000' style="background-color: #800000;">Maroon</option>
+                    <option	value='#66CDAA' style="background-color: #66CDAA;">MediumAquaMarine</option>
+                    <option	value='#0000CD' style="background-color: #0000CD;">MediumBlue</option>
+                    <option	value='#BA55D3' style="background-color: #BA55D3;">MediumOrchid</option>
+                    <option	value='#9370DB' style="background-color: #9370DB;">MediumPurple</option>
+                    <option	value='#3CB371' style="background-color: #3CB371;">MediumSeaGreen</option>
+                    <option	value='#7B68EE' style="background-color: #7B68EE;">MediumSlateBlue</option>
+                    <option	value='#00FA9A' style="background-color: #00FA9A;">MediumSpringGreen</option>
+                    <option	value='#48D1CC' style="background-color: #48D1CC;">MediumTurquoise</option>
+                    <option	value='#C71585' style="background-color: #C71585;">MediumVioletRed</option>
+                    <option	value='#191970' style="background-color: #191970;">MidnightBlue</option>
+                    <option	value='#F5FFFA' style="background-color: #F5FFFA;">MintCream</option>
+                    <option	value='#FFE4E1' style="background-color: #FFE4E1;">MistyRose</option>
+                    <option	value='#FFE4B5' style="background-color: #FFE4B5;">Moccasin</option>
+                    <option	value='#FFDEAD' style="background-color: #FFDEAD;">NavajoWhite</option>
+                    <option	value='#000080' style="background-color: #000080;">Navy</option>
+                    <option	value='#FDF5E6' style="background-color: #FDF5E6;">OldLace</option>
+                    <option	value='#808000' style="background-color: #808000;">Olive</option>
+                    <option	value='#6B8E23' style="background-color: #6B8E23;">OliveDrab</option>
+                    <option	value='#FFA500' style="background-color: #FFA500;">Orange</option>
+                    <option	value='#FF4500' style="background-color: #FF4500;">OrangeRed</option>
+                    <option	value='#DA70D6' style="background-color: #DA70D6;">Orchid</option>
+                    <option	value='#EEE8AA' style="background-color: #EEE8AA;">PaleGoldenRod</option>
+                    <option	value='#98FB98' style="background-color: #98FB98;">PaleGreen</option>
+                    <option	value='#AFEEEE' style="background-color: #AFEEEE;">PaleTurquoise</option>
+                    <option	value='#DB7093' style="background-color: #DB7093;">PaleVioletRed</option>
+                    <option	value='#FFEFD5' style="background-color: #FFEFD5;">PapayaWhip</option>
+                    <option	value='#FFDAB9' style="background-color: #FFDAB9;">PeachPuff</option>
+                    <option	value='#CD853F' style="background-color: #CD853F;">Peru</option>
+                    <option	value='#FFC0CB' style="background-color: #FFC0CB;">Pink</option>
+                    <option	value='#DDA0DD' style="background-color: #DDA0DD;">Plum</option>
+                    <option	value='#B0E0E6' style="background-color: #B0E0E6;">PowderBlue</option>
+                    <option	value='#800080' style="background-color: #800080;">Purple</option>
+                    <option	value='#663399' style="background-color: #663399;">RebeccaPurple</option>
+                    <option	value='#FF0000' style="background-color: #FF0000;">Red</option>
+                    <option	value='#BC8F8F' style="background-color: #BC8F8F;">RosyBrown</option>
+                    <option	value='#4169E1' style="background-color: #4169E1;">RoyalBlue</option>
+                    <option	value='#8B4513' style="background-color: #8B4513;">SaddleBrown</option>
+                    <option	value='#FA8072' style="background-color: #FA8072;">Salmon</option>
+                    <option	value='#F4A460' style="background-color: #F4A460;">SandyBrown</option>
+                    <option	value='#2E8B57' style="background-color: #2E8B57;">SeaGreen</option>
+                    <option	value='#FFF5EE' style="background-color: #FFF5EE;">SeaShell</option>
+                    <option	value='#A0522D' style="background-color: #A0522D;">Sienna</option>
+                    <option	value='#C0C0C0' style="background-color: #C0C0C0;">Silver</option>
+                    <option	value='#87CEEB' style="background-color: #87CEEB;">SkyBlue</option>
+                    <option	value='#6A5ACD' style="background-color: #6A5ACD;">SlateBlue</option>
+                    <option	value='#708090' style="background-color: #708090;">SlateGray</option>
+                    <option	value='#FFFAFA' style="background-color: #FFFAFA;">Snow</option>
+                    <option	value='#00FF7F' style="background-color: #00FF7F;">SpringGreen</option>
+                    <option	value='#4682B4' style="background-color: #4682B4;">SteelBlue</option>
+                    <option	value='#D2B48C' style="background-color: #D2B48C;">Tan</option>
+                    <option	value='#008080' style="background-color: #008080;">Teal</option>
+                    <option	value='#D8BFD8' style="background-color: #D8BFD8;">Thistle</option>
+                    <option	value='#FF6347' style="background-color: #FF6347;">Tomato</option>
+                    <option	value='#40E0D0' style="background-color: #40E0D0;">Turquoise</option>
+                    <option	value='#EE82EE' style="background-color: #EE82EE;">Violet</option>
+                    <option	value='#F5DEB3' style="background-color: #F5DEB3;">Wheat</option>
+                    <option	value='#FFFFFF' style="background-color: #FFFFFF;">White</option>
+                    <option	value='#F5F5F5' style="background-color: #F5F5F5;">WhiteSmoke</option>
+                    <option	value='#FFFF00' style="background-color: #FFFF00;">Yellow</option>
+                    <option	value='#9ACD32' style="background-color: #9ACD32;">YellowGreen</option>
+                </select>
+            </div>
+
+            <div class="control_block">
+                <input type="button" value="Fill Polygon" onclick="fillPolygon();">
+            </div>
+
+            <div class="control_block">
+                <input type="button" value="Clear Previous Points" onclick="clearPreviousPoints();">
+            </div>
+
+            <div class="control_block">
+                <input type="button" value="Clear Canvas" onclick="clearCanvas();">
+            </div>
+
+            <div class="control_block">
+                <label>Edit mode:</label>
+                <select id="mode" name="mode">
+                    <option value="waypoints">Waypoints</option>
+                    <option value="move_waypoints">Move waypoints</option>
+                    <option value="relations">Relations</option>
+                    <option value="path">Create path</option>
+                </select>
+            </div>
+
+		</div>
+
+        <div class="mouse_helper"></div>
+
+		<script type="text/javascript">
+		document.write('<scr'+'ipt type="text/javascript" src="http://ad.ddo.jp/728x90.js.php?ddo_id=turbosnail&ddo_i='+Math.floor((new Date()).getTime()/1000/60)+'"><'+'/scr'+'ipt>');
+		</script>
+
+		<!-- Yandex.Metrika counter --><script type="text/javascript">(function (d, w, c) { (w[c] = w[c] || []).push(function() { try { w.yaCounter24504719 = new Ya.Metrika({id:24504719, trackLinks:true, accurateTrackBounce:true, trackHash:true}); } catch(e) { } }); var n = d.getElementsByTagName("script")[0], s = d.createElement("script"), f = function () { n.parentNode.insertBefore(s, n); }; s.type = "text/javascript"; s.async = true; s.src = (d.location.protocol == "https:" ? "https:" : "http:") + "//mc.yandex.ru/metrika/watch.js"; if (w.opera == "[object Opera]") { d.addEventListener("DOMContentLoaded", f, false); } else { f(); } })(document, window, "yandex_metrika_callbacks");</script><noscript><div><img src="//mc.yandex.ru/watch/24504719" style="position:absolute; left:-9999px;" alt="" /></div></noscript><!-- /Yandex.Metrika counter -->
+	</body>
+
+</html>
