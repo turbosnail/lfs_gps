@@ -11,9 +11,9 @@ circles=[];
 polygons = [];
 lines = [];
 
+waypointID = 1;
 waypoints = {};
 
-drag = false;
 /*
 waypoints = {
     1:{
@@ -34,12 +34,45 @@ waypoints = {
 };
 */
 
+drag = false;
+
+tempLine = null;
+activeCircle = null;
+
+started = false;
+activeCircleFrom = null;
+activeCircleTo = null;
+
 
 $(function(){
     canvasDiv=document.getElementById("canvas");
     window.gr = new jxGraphics(canvasDiv);
 
-    $(document).on('mousemove','#canvas',getMouseXY);
+    $(document).on('mousemove','#canvas',function(e){
+        getMouseXY(e);
+
+        if (drag) {
+            if (activeCircle) {
+                activeCircle.center = new jxPoint(mouseX, mouseY);
+                activeCircle.draw(gr);
+            }
+        }
+
+        if($('#mode').val() == 'relation')
+        {
+            if (activeCircleFrom)
+            {
+                if(!tempLine)
+                {
+                    tempLine = new jxLine(activeCircleFrom.center,new jxPoint(mouseX,mouseY),getPen(4))
+                }
+
+                tempLine.toPoint = new jxPoint(mouseX,mouseY);
+                tempLine.draw(gr);
+            }
+        }
+
+    });
 
     $(document).on('mousedown','#canvas',function(){
 
@@ -50,7 +83,33 @@ $(function(){
         {
             case 'waypoints':
                 drawPoint();
-                break
+                break;
+            case 'relation':
+                if(activeCircleFrom && activeCircleTo)
+                {
+                    if(!in_array(activeCircleTo.id,waypoints[activeCircleFrom.id].relation))
+                        waypoints[activeCircleFrom.id].relation.push(activeCircleTo.id);
+
+                    if(!in_array(activeCircleFrom.id,waypoints[activeCircleTo.id].relation))
+                        waypoints[activeCircleTo.id].relation.push(activeCircleFrom.id);
+
+                    tempLine.toPoint = activeCircleTo.center;
+                    tempLine.draw(gr);
+                    lines.push(tempLine)
+                    tempLine = null;
+
+                    activeCircleFrom = null;
+                    activeCircleTo = null;
+                }
+                else
+                {
+                    activeCircleFrom = null;
+                    activeCircleTo = null;
+                    if(tempLine)
+                        tempLine.remove();
+                    tempLine = null;
+                }
+                break;
         }
     });
 
@@ -80,20 +139,6 @@ function getMouseXY(e)
     // mouseX = mouseX - canvasDiv.offsetLeft;
     // mouseY = mouseY - canvasDiv.offsetTop;
 
-    //Redraw the curve with the changed point
-    if (drag) {
-        if (activeCircle) {
-            activeCircle.center = new jxPoint(mouseX, mouseY);
-            activeCircle.draw(gr);
-            var curvePoints = new Array();
-            /*for (var i in circles) {
-                curvePoints[i] = circles[i].center;
-            }
-            curve.points = curvePoints;
-            curve.draw(gr);*/
-        }
-    }
-
     return true;
 }
 
@@ -112,9 +157,17 @@ function getColor()
     return  color
 }
 
-function getPen()
+function getPen(width)
 {
-    return new jxPen(getColor(), '1px');;
+    if(typeof width == 'undefined')
+        width = 1;
+
+    width = parseInt(width);
+
+    if(width < 1)
+        width = 1;
+
+    return new jxPen(getColor(), width + 'px');
 }
 
 function getBrush()
@@ -143,12 +196,21 @@ function checkPoints(noAlert)
 function drawPoint()
 {
     var cir = new jxCircle(new jxPoint(mouseX,mouseY), 10, getPen(), getBrush());
+    cir.id = waypointID;
     cir.draw(gr);
     cir.addEventListener('mousedown', circleMouseDown);
     cir.addEventListener('mouseup', circleMouseUp);
     cir.addEventListener('mouseover', circleMouseOver);
     cir.addEventListener('mouseout', circleMouseOut);
+
+    waypoints[waypointID] = {};
+    waypoints[waypointID].x = mouseX - 1280;
+    waypoints[waypointID].y = 1280 - mouseY;
+    waypoints[waypointID].relation = [];
+
     circles.push(cir);
+
+    ++waypointID;
 
     return cir;
 }
@@ -156,20 +218,30 @@ function drawPoint()
 //Mousedown event handler for circle
 function circleMouseDown(evt, obj) {
 
-    if($('#mode').val() != 'move_waypoints')
-        return;
+    switch ($('#mode').val()) {
 
-    drag = true;
-    activeCircle = obj;
+        case 'move_waypoints':
+            drag = true;
+            activeCircle = obj;
+            break;
+        case 'relation':
+            activeCircleFrom = obj;
+            break;
+    }
 }
 
 //Mouseup event handler for circle
 function circleMouseUp(evt, obj) {
-    if($('#mode').val() != 'move_waypoints')
-        return;
 
-    drag = false;
-    activeCircle = null;
+    switch ($('#mode').val()) {
+
+        case 'move_waypoints':
+            drag = false;
+            activeCircle = null;
+            break;
+        case 'relation':
+            break;
+    }
 }
 
 function circleMouseOver(evt, obj) {
@@ -181,6 +253,9 @@ function circleMouseOver(evt, obj) {
 
     obj.brush = new jxBrush(new jxColor("red"));
     obj.draw(gr);
+
+    if(activeCircleFrom && activeCircleFrom.id != obj.id)
+        activeCircleTo = obj;
 }
 
 function circleMouseOut(evt, obj) {
@@ -261,5 +336,15 @@ function clearPreviousPoints()
 function track(track)
 {
     canvasDiv.style.backgroundImage = "url(http://img.lfs.net/remote/maps/"+track+".jpg)";
+    return false;
+}
+
+function in_array(needle, haystack)
+{
+    for(var i in haystack)
+    {
+        if(haystack[i] == needle)
+            return true;
+    }
     return false;
 }
