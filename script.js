@@ -7,7 +7,7 @@ d1 = false;
 d2 = false;
 
 rects = [];
-circles=[];
+circles={};
 polygons = [];
 lines = [];
 
@@ -45,31 +45,53 @@ activeCircleTo = null;
 
 
 $(function(){
+    waypoints[$('#track').val()] = {};
+
     canvasDiv=document.getElementById("canvas");
     window.gr = new jxGraphics(canvasDiv);
 
     $(document).on('mousemove','#canvas',function(e){
         getMouseXY(e);
 
-        if (drag) {
-            if (activeCircle) {
-                activeCircle.center = new jxPoint(mouseX, mouseY);
-                activeCircle.draw(gr);
-            }
-        }
 
-        if($('#mode').val() == 'relation')
+
+        switch ($('#mode').val())
         {
-            if (activeCircleFrom)
-            {
-                if(!tempLine)
+            case 'relation':
+                if (activeCircleFrom)
                 {
-                    tempLine = new jxLine(activeCircleFrom.center,new jxPoint(mouseX,mouseY),getPen(4))
-                }
+                    if(!tempLine)
+                    {
+                        tempLine = new jxLine(activeCircleFrom.center,new jxPoint(mouseX,mouseY),getPen(4))
+                    }
 
-                tempLine.toPoint = new jxPoint(mouseX,mouseY);
-                tempLine.draw(gr);
-            }
+                    tempLine.toPoint = new jxPoint(mouseX,mouseY);
+                    tempLine.draw(gr);
+                }
+                break;
+            case 'move_waypoints':
+                if (drag) {
+                    if (activeCircle) {
+                        activeCircle.center = new jxPoint(mouseX, mouseY);
+                        activeCircle.draw(gr);
+
+                        for(var i in lines)
+                        {
+                            if(lines[i].idTo == activeCircle.id)
+                            {
+                                lines[i].toPoint = activeCircle.center;
+                                lines[i].draw(gr);
+                            }
+
+                            if(lines[i].idFrom == activeCircle.id)
+                            {
+                                lines[i].fromPoint = activeCircle.center;
+                                lines[i].draw(gr);
+                            }
+                        }
+                    }
+                }
+                break;
         }
 
     });
@@ -79,23 +101,38 @@ $(function(){
     });
 
     $(document).on('mouseup','#canvas',function(){
-        switch ($('#mode').val())
-        {
+        switch ($('#mode').val()) {
             case 'waypoints':
                 drawPoint();
+                break;
+            case 'move_waypoints':
+                drag = false;
+                if (activeCircle)
+                {
+                    for (var i in waypoints[$('#track').val()][activeCircle.id].relation) {
+                        waypoints[$('#track').val()][activeCircle.id].relation[i] = getDistance(activeCircle, circles[i])
+                        waypoints[$('#track').val()][i].relation[activeCircle.id] = getDistance(activeCircle, circles[i])
+                    }
+                }
+                activeCircle = null;
                 break;
             case 'relation':
                 if(activeCircleFrom && activeCircleTo)
                 {
-                    if(!in_array(activeCircleTo.id,waypoints[activeCircleFrom.id].relation))
-                        waypoints[activeCircleFrom.id].relation.push(activeCircleTo.id);
+                    if(typeof waypoints[$('#track').val()][activeCircleFrom.id].relation[activeCircleTo.id] == 'undefined')
+                        waypoints[$('#track').val()][activeCircleFrom.id].relation[activeCircleTo.id] = getDistance(activeCircleFrom, activeCircleTo);
 
-                    if(!in_array(activeCircleFrom.id,waypoints[activeCircleTo.id].relation))
-                        waypoints[activeCircleTo.id].relation.push(activeCircleFrom.id);
+                    if(typeof waypoints[$('#track').val()][activeCircleTo.id].relation[activeCircleFrom.id] == 'undefined')
+                        waypoints[$('#track').val()][activeCircleTo.id].relation[activeCircleFrom.id] = getDistance(activeCircleFrom, activeCircleTo);
 
+                    tempLine.idFrom = activeCircleFrom.id;
+                    tempLine.idTo = activeCircleTo.id;
                     tempLine.toPoint = activeCircleTo.center;
+                    tempLine.addEventListener('click', LineMouseClick);
+                    tempLine.addEventListener('mouseover', LineMouseOver);
+                    tempLine.addEventListener('mouseout', LineMouseOut);
                     tempLine.draw(gr);
-                    lines.push(tempLine)
+                    lines.push(tempLine);
                     tempLine = null;
 
                     activeCircleFrom = null;
@@ -203,12 +240,12 @@ function drawPoint()
     cir.addEventListener('mouseover', circleMouseOver);
     cir.addEventListener('mouseout', circleMouseOut);
 
-    waypoints[waypointID] = {};
-    waypoints[waypointID].x = mouseX - 1280;
-    waypoints[waypointID].y = 1280 - mouseY;
-    waypoints[waypointID].relation = [];
+    waypoints[$('#track').val()][waypointID] = {};
+    waypoints[$('#track').val()][waypointID].x = mouseX - 1280;
+    waypoints[$('#track').val()][waypointID].y = 1280 - mouseY;
+    waypoints[$('#track').val()][waypointID].relation = {};
 
-    circles.push(cir);
+    circles[waypointID] = cir;
 
     ++waypointID;
 
@@ -236,8 +273,7 @@ function circleMouseUp(evt, obj) {
     switch ($('#mode').val()) {
 
         case 'move_waypoints':
-            drag = false;
-            activeCircle = null;
+
             break;
         case 'relation':
             break;
@@ -268,6 +304,33 @@ function circleMouseOut(evt, obj) {
     obj.draw(gr);
 }
 
+LineMouseClick = function(evt,obj)
+{
+    if($('#mode').val() != 'remove_relation')
+        return;
+
+    for(var i in lines)
+    {
+        if(lines[i] == obj)
+        {
+            obj.remove()
+            delete(waypoints[$('#track').val()][obj.idFrom].relation[obj.idTo])
+            delete(waypoints[$('#track').val()][obj.idTo].relation[obj.idFrom])
+            lines.splice(i,1)
+            break;
+        }
+    }
+};
+
+LineMouseOver = function(evt,obj)
+{
+    document.body.style.cursor = "pointer";
+};
+
+LineMouseOut = function(evt,obj)
+{
+    document.body.style.cursor = "inherit";
+};
 
 
 function drawPolyline()
@@ -291,7 +354,7 @@ function drawLine()
 
 
 
-function clearCanvas()
+function clearCanvas(clearTrack)
 {
     //gr.clear();
 
@@ -315,11 +378,12 @@ function clearCanvas()
         lines[i].remove()
     }
 
-
     rects = [];
-    circles=[];
+    circles={};
     polygons = [];
     lines = [];
+    if(clearTrack)
+        waypoints[$('#track').val()] = {};
 }
 
 function clearPreviousPoints()
@@ -336,15 +400,27 @@ function clearPreviousPoints()
 function track(track)
 {
     canvasDiv.style.backgroundImage = "url(http://img.lfs.net/remote/maps/"+track+".jpg)";
+    clearCanvas()
+    if(typeof waypoints[track] != 'undefined')
+    {
+        for(i in waypoints[track])
+        {
+            // put point
+        }
+
+        for(var i in waypoints[track])
+        {
+            for(var j in waypoints[track][i].relation)
+            {
+                // put relation
+            }
+
+        }
+    }
     return false;
 }
 
-function in_array(needle, haystack)
+function getDistance(activeCircleFrom, activeCircleTo)
 {
-    for(var i in haystack)
-    {
-        if(haystack[i] == needle)
-            return true;
-    }
-    return false;
+    return Math.sqrt( Math.pow(activeCircleTo.center.x-activeCircleFrom.center.x,2) +  Math.pow(activeCircleTo.center.y-activeCircleFrom.center.y,2))
 }

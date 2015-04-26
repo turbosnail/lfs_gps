@@ -23,7 +23,7 @@
 		<div id="work">
             <div class="control_block">
                 <label>Track:</label>
-                <select onchange="track(this.value)">
+                <select id="track" onchange="track(this.value)">
                     <option>AS</option>
                     <option>AU</option>
                     <option>BL</option>
@@ -182,7 +182,7 @@
 
 
             <div class="control_block">
-                <input type="button" value="Clear Canvas" onclick="clearCanvas();">
+                <input type="button" value="Clear Canvas" onclick="clearCanvas(true);">
             </div>
 
             <div class="control_block">
@@ -191,6 +191,7 @@
                     <option value="waypoints">Add waypoints</option>
                     <option value="move_waypoints">Move waypoints</option>
                     <option value="relation">Relations</option>
+                    <option value="remove_relation">Remove Relations</option>
                     <option value="path">Create path</option>
                 </select>
             </div>
