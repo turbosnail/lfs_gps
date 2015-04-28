@@ -11,7 +11,7 @@ circles={};
 polygons = [];
 lines = [];
 
-waypointID = 1;
+waypointID = 0;
 waypoints = {};
 
 /*
@@ -52,7 +52,8 @@ matrix = [];
 
 
 $(function(){
-    waypoints[$('#track').val()] = {};
+
+    loadWaypoints($('#track').val())
 
     canvasDiv=document.getElementById("canvas");
     window.gr = new jxGraphics(canvasDiv);
@@ -116,9 +117,9 @@ $(function(){
                 drag = false;
                 if (activeCircle)
                 {
-                    for (var i in waypoints[$('#track').val()][activeCircle.id].relation) {
-                        waypoints[$('#track').val()][activeCircle.id].relation[i] = getDistance(activeCircle, circles[i])
-                        waypoints[$('#track').val()][i].relation[activeCircle.id] = getDistance(activeCircle, circles[i])
+                    for (var i in waypoints[activeCircle.id].relation) {
+                        waypoints[activeCircle.id].relation[i] = getDistance(activeCircle, circles[i])
+                        waypoints[i].relation[activeCircle.id] = getDistance(activeCircle, circles[i])
                     }
                 }
                 activeCircle = null;
@@ -126,8 +127,6 @@ $(function(){
             case 'relation':
                 if(activeCircleFrom && activeCircleTo)
                 {
-
-
                     createRelation(activeCircleFrom, activeCircleTo);
 
                     activeCircleFrom = null;
@@ -145,14 +144,14 @@ $(function(){
             case 'path':
                 if(!startCircle)
                 {
-                    tempWaypoints = waypoints[$('#track').val()]
-                    startCircle = drawPoint();
+                    tempWaypoints = waypoints
+                    startCircle = drawPoint(true);
                 }
                 else
                 {
                     if(!endCircle)
                     {
-                        endCircle = drawPoint();
+                        endCircle = drawPoint(true);
                         createPath(startCircle, endCircle);
                     }
                     else
@@ -161,7 +160,12 @@ $(function(){
                         endCircle.remove()
                         startCircle = null;
                         endCircle = null;
-                        waypoints[$('#track').val()] = tempWaypoints;
+                        waypoints = tempWaypoints;
+
+                        clearLines()
+
+                        tempWaypoints = waypoints
+                        startCircle = drawPoint(true);
                     }
                 }
                 break;
@@ -248,25 +252,33 @@ function checkPoints(noAlert)
     return true;
 }
 
-function drawPoint()
+function drawPoint(show)
 {
-    var cir = new jxCircle(new jxPoint(mouseX,mouseY), 10, getPen(), getBrush());
-    cir.id = waypointID;
-    cir.draw(gr);
+    waypoints[waypointID] = {};
+    waypoints[waypointID].x = mouseX - 1280;
+    waypoints[waypointID].y = 1280 - mouseY;
+    waypoints[waypointID].relation = {};
+
+    var cir = createCirlce(mouseX,mouseY,waypointID,show)
+
+    ++waypointID;
+
+    return cir;
+}
+
+function createCirlce(x,y, ID, show)
+{
+    var cir = new jxCircle(new jxPoint(x,y), 10, getPen(), getBrush());
+    cir.id = ID;
+
+    if(show)
+        cir.draw(gr);
+
     cir.addEventListener('mousedown', circleMouseDown);
     cir.addEventListener('mouseup', circleMouseUp);
     cir.addEventListener('mouseover', circleMouseOver);
     cir.addEventListener('mouseout', circleMouseOut);
-
-    waypoints[$('#track').val()][waypointID] = {};
-    waypoints[$('#track').val()][waypointID].x = mouseX - 1280;
-    waypoints[$('#track').val()][waypointID].y = 1280 - mouseY;
-    waypoints[$('#track').val()][waypointID].relation = {};
-
-    circles[waypointID] = cir;
-
-    ++waypointID;
-
+    circles[ID] = cir;
     return cir;
 }
 
@@ -337,8 +349,8 @@ LineMouseClick = function(evt,obj)
         if(lines[i] == obj)
         {
             obj.remove()
-            delete(waypoints[$('#track').val()][obj.idFrom].relation[obj.idTo])
-            delete(waypoints[$('#track').val()][obj.idTo].relation[obj.idFrom])
+            delete(waypoints[obj.idFrom].relation[obj.idTo])
+            delete(waypoints[obj.idTo].relation[obj.idFrom])
             lines.splice(i,1)
             break;
         }
@@ -403,7 +415,7 @@ function clearCanvas(clearTrack)
     polygons = [];
 
     if(clearTrack)
-        waypoints[$('#track').val()] = {};
+        waypoints = {};
 }
 
 function clearLines()
@@ -429,23 +441,8 @@ function clearPreviousPoints()
 function track(track)
 {
     canvasDiv.style.backgroundImage = "url(http://img.lfs.net/remote/maps/"+track+".jpg)";
-    clearCanvas()
-    if(typeof waypoints[track] != 'undefined')
-    {
-        for(i in waypoints[track])
-        {
-            // put point
-        }
-
-        for(var i in waypoints[track])
-        {
-            for(var j in waypoints[track][i].relation)
-            {
-                // put relation
-            }
-
-        }
-    }
+    clearCanvas();
+    loadWaypoints(track);
     return false;
 }
 
@@ -456,13 +453,13 @@ function getDistance(activeCircleFrom, activeCircleTo)
 
 function createRelation(start, end)
 {
-    if(typeof waypoints[$('#track').val()][start.id].relation[end.id] == 'undefined')
-        waypoints[$('#track').val()][start.id].relation[end.id] = getDistance(start, end);
+    if(typeof waypoints[start.id].relation[end.id] == 'undefined')
+        waypoints[start.id].relation[end.id] = getDistance(start, end);
 
-    if(typeof waypoints[$('#track').val()][end.id].relation[start.id] == 'undefined')
-        waypoints[$('#track').val()][end.id].relation[start.id] = getDistance(start, end);
+    if(typeof waypoints[end.id].relation[start.id] == 'undefined')
+        waypoints[end.id].relation[start.id] = getDistance(start, end);
     if(!tempLine)
-        tempLine = new jxLine(start.center,end.center, getPen());
+        tempLine = new jxLine(start.center,end.center, getPen(4));
 
     tempLine.idFrom = start.id;
     tempLine.idTo = end.id;
@@ -480,12 +477,12 @@ function createPath(startCircle, endCircle)
 {
     minStartDist = Infinity;
     minEndDist = Infinity;
-    minStartCirlce = 0;
-    minEndCircle = 0;
+    minStartCirlce = null;
+    minEndCircle = null;
 
 
 
-    for(var i in waypoints[$('#track').val()])
+    for(var i in waypoints)
     {
         tmpStartDist = getDistance(circles[i], startCircle);
         tmpEndDist = getDistance(circles[i], endCircle);
@@ -503,27 +500,112 @@ function createPath(startCircle, endCircle)
         }
     }
 
-    if(minStartCirlce>0 && minEndCircle>0)
+    if(minStartCirlce != null  && minEndCircle != null)
     {
         createRelation(startCircle, circles[minStartCirlce]);
         createRelation(endCircle, circles[minEndCircle]);
     }
 
-    for(var i in waypoints[$('#track').val()])
+    for(var i in waypoints)
     {
-        for(var j in waypoints[$('#track').val()])
+        tempArray = [];
+        for(var j in waypoints)
         {
-            if(typeof  matrix[i] == 'undefined')
-                matrix[i] = [];
-
-            if(typeof waypoints[$('#track').val()][i].relation[j] != 'undefined')
-                matrix[i][j] = waypoints[$('#track').val()][i].relation[j];
+            if(typeof waypoints[i].relation[j] != 'undefined')
+                tempArray[j] = waypoints[i].relation[j];
             else if(i == j)
-                matrix[i][j] = 0;
+                tempArray[j] = 0;
             else
-                matrix[i][j] = Infinity;
+                tempArray[j] = Infinity;
         }
+
+        matrix[i] = tempArray
     }
-    console.log(matrix)
-    //clearLines();
+
+    //console.log(matrix)
+
+    flag = [] // метка посещаемости точки
+    var max = Infinity;
+    var nmin = 0;
+
+    d = [];
+    p = [];
+    n = 1;
+
+    for(var i in matrix)
+        flag[i] = true;
+
+    var l = startCircle.id
+
+    for(var i in matrix)
+        d[i] = matrix[l][i]
+
+    flag[l] = false
+
+    for(var i in matrix)
+    {
+        max = Infinity;
+        nmin = l;
+
+        for(var j in matrix)
+        {
+            if (flag[j] && max > d[j])
+            {
+                max = d[j];
+                nmin = j;
+            }
+        }
+
+        l = nmin;
+        flag[l] = false;
+
+        for(var j in matrix)
+        {
+            if (flag[j] && d[j] > (matrix[l][j] + d[l]))
+            {
+                d[j] = matrix[l][j] + d[l];
+                p[j] = parseInt(l);
+            }
+        }
+
+    }
+
+    var path = []
+
+    prom = p[endCircle.id]
+    do
+    {
+        path.unshift(prom);
+        prom = p[prom];
+    }
+    while(prom != null);
+
+    path.unshift(startCircle.id);
+    path.push(endCircle.id);
+
+    console.log(path)
+    clearLines();
+
+    for(var i = 0; i < path.length - 1; i++)
+    {
+        createRelation(circles[path[i]],circles[path[i+1]]);
+    }
+}
+
+function loadWaypoints(track)
+{
+    waypoints = {}
+    waypointID = 0;
+
+    $.get('waypoints_' + track + '.json',function(data){
+
+        waypoints = data.waypoints;
+        waypointID = data.waypointID;
+
+        for(var i in data.waypoints)
+        {
+            createCirlce( 1280 + data.waypoints[i].x, 1280 - data.waypoints[i].y, i, false)
+        }
+
+    },'json');
 }
