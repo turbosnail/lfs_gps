@@ -124,7 +124,10 @@ $(function(){
             case 'path':
                 if(!startCircle)
                 {
-                    tempWaypoints = waypoints.slice();
+                    tempWaypoints = [];
+                    for(i in waypoints)
+                        tempWaypoints.push(waypoints[i]);
+
                     startCircle = drawPoint(true);
                 }
                 else
@@ -132,8 +135,11 @@ $(function(){
                     if(!endCircle)
                     {
                         endCircle = drawPoint(true);
-                        createPath(startCircle, endCircle);
-                        waypoints = tempWaypoints.slice();
+                        createPath(startCircle.id, endCircle.id);
+
+                        waypoints = [];
+                        for(i in tempWaypoints)
+                            waypoints.push(tempWaypoints[i]);
                     }
                     else
                     {
@@ -145,8 +151,8 @@ $(function(){
 
                         clearLines()
 
-                        tempWaypoints = waypoints.slice()
-                        startCircle = drawPoint(true);
+                        //tempWaypoints = waypoints.slice()
+                        //startCircle = drawPoint(true);
                     }
                 }
                 break;
@@ -458,7 +464,7 @@ function createRelation(start, end)
     tempLine = null;
 }
 
-function createPath(startCircle, endCircle)
+function createPath(startID, endID)
 {
     minStartDist = Infinity;
     minEndDist = Infinity;
@@ -469,16 +475,16 @@ function createPath(startCircle, endCircle)
 
     for(var i in waypoints)
     {
-        tmpStartDist = getDistance(i, startCircle.id);
-        tmpEndDist = getDistance(i, endCircle.id);
+        tmpStartDist = getDistance(i, startID);
+        tmpEndDist = getDistance(i, endID);
 
-        if(tmpStartDist <  minStartDist && i != startCircle.id)
+        if(tmpStartDist <  minStartDist && i != startID)
         {
             minStartDist = tmpStartDist;
             minStartCirlce = i;
         }
 
-        if(tmpEndDist <  minEndDist && i != endCircle.id)
+        if(tmpEndDist <  minEndDist && i != endID)
         {
             minEndDist = tmpEndDist;
             minEndCircle = i;
@@ -487,8 +493,8 @@ function createPath(startCircle, endCircle)
 
     if(minStartCirlce != null  && minEndCircle != null)
     {
-        createRelation(startCircle.id, minStartCirlce);
-        createRelation(endCircle.id, minEndCircle);
+        createRelation(startID, minStartCirlce);
+        createRelation(endID, minEndCircle);
     }
 
     for(var i in waypoints)
@@ -520,7 +526,7 @@ function createPath(startCircle, endCircle)
     for(var i in matrix)
         flag[i] = true;
 
-    var l = startCircle.id
+    var l = startID
 
     for(var i in matrix)
         d[i] = matrix[l][i]
@@ -557,7 +563,7 @@ function createPath(startCircle, endCircle)
 
     var path = []
 
-    prom = p[endCircle.id]
+    prom = p[endID]
     do
     {
         path.unshift(prom);
@@ -565,8 +571,8 @@ function createPath(startCircle, endCircle)
     }
     while(prom != null);
 
-    path.unshift(startCircle.id);
-    path.push(endCircle.id);
+    path.unshift(startID);
+    path.push(endID);
 
     console.log(path)
     clearLines();
