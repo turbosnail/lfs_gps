@@ -584,16 +584,13 @@ function loadWaypoints(track)
 
     $.get(track + '.json',function(data){
 
-        for(var i in data.waypoints)
-        {
-            waypoints.push(data.waypoints[i])
-
-        }
+        waypoints = data;
 
         for(var i = 0; i < waypoints.length -1; i++)
         {
             //createCirlce( 1280 + data.waypoints[i].x, 1280 - data.waypoints[i].y, i, true)
-            createRelation(i, i+1)
+            for(j in waypoints[i].relation)
+                createRelation(i, j)
         }
 
     },'json');
@@ -601,14 +598,9 @@ function loadWaypoints(track)
 
 function save()
 {
-    data = {
-        waypoints: waypoints,
-        waypointID: waypointID
-    };
-
     $.post('save.php',
         {
-            waypoints: JSON.stringify(data,null,4),
+            waypoints: JSON.stringify(waypoints,null,4),
             track: $('#track').val()
         },
         function(){

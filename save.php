@@ -7,6 +7,7 @@
 
 if($_SERVER['REQUEST_METHOD'] == 'POST')
 {
-    file_put_contents(__DIR__.DIRECTORY_SEPARATOR.$_POST['track'].'.json');
+    echo __DIR__.DIRECTORY_SEPARATOR.$_POST['track'].'.json';
+    file_put_contents(__DIR__.DIRECTORY_SEPARATOR.$_POST['track'].'.json',$_POST['waypoints']);
     echo 'OK';
 }
