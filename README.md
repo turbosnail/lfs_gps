@@ -10,6 +10,7 @@ Done:
 - Remove relations
 - Update relation after move waypoint
 - Store points with relation in json
+- Loading from json
 
 Undone:
-- Loading from json
+

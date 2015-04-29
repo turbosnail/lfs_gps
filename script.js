@@ -11,28 +11,8 @@ circles={};
 polygons = [];
 lines = [];
 
-waypointID = 0;
-waypoints = {};
 
-/*
-waypoints = {
-    1:{
-        x: 1,
-        y: 0,
-        relation: [2,3]
-    },
-    2:{
-        x: 0,
-        y: 1,
-        relation: [1,3]
-    }
-    3:{
-        x: 1,
-        y: 1,
-        relation: [1,2]
-    }
-};
-*/
+waypoints = [];
 
 // move circle
 drag = false;
@@ -46,7 +26,7 @@ activeCircleTo = null;
 // to create path
 startCircle = null;
 endCircle = null;
-tempWaypoints = null;
+var tempWaypoints = null;
 tempLines = null;
 matrix = [];
 
@@ -111,15 +91,15 @@ $(function(){
     $(document).on('mouseup','#canvas',function(){
         switch ($('#mode').val()) {
             case 'waypoints':
-                drawPoint();
+                drawPoint(true);
                 break;
             case 'move_waypoints':
                 drag = false;
                 if (activeCircle)
                 {
                     for (var i in waypoints[activeCircle.id].relation) {
-                        waypoints[activeCircle.id].relation[i] = getDistance(activeCircle, circles[i])
-                        waypoints[i].relation[activeCircle.id] = getDistance(activeCircle, circles[i])
+                        waypoints[activeCircle.id].relation[i] = getDistance(activeCircle.id, i)
+                        waypoints[i].relation[activeCircle.id] = getDistance(activeCircle.id, i)
                     }
                 }
                 activeCircle = null;
@@ -127,7 +107,7 @@ $(function(){
             case 'relation':
                 if(activeCircleFrom && activeCircleTo)
                 {
-                    createRelation(activeCircleFrom, activeCircleTo);
+                    createRelation(activeCircleFrom.id, activeCircleTo.id);
 
                     activeCircleFrom = null;
                     activeCircleTo = null;
@@ -144,7 +124,7 @@ $(function(){
             case 'path':
                 if(!startCircle)
                 {
-                    tempWaypoints = waypoints
+                    tempWaypoints = waypoints.slice();
                     startCircle = drawPoint(true);
                 }
                 else
@@ -153,18 +133,19 @@ $(function(){
                     {
                         endCircle = drawPoint(true);
                         createPath(startCircle, endCircle);
+                        waypoints = tempWaypoints.slice();
                     }
                     else
                     {
-                        startCircle.remove()
-                        endCircle.remove()
+                        startCircle.remove();
+                        endCircle.remove();
                         startCircle = null;
                         endCircle = null;
-                        waypoints = tempWaypoints;
+
 
                         clearLines()
 
-                        tempWaypoints = waypoints
+                        tempWaypoints = waypoints.slice()
                         startCircle = drawPoint(true);
                     }
                 }
@@ -254,14 +235,15 @@ function checkPoints(noAlert)
 
 function drawPoint(show)
 {
-    waypoints[waypointID] = {};
-    waypoints[waypointID].x = mouseX - 1280;
-    waypoints[waypointID].y = 1280 - mouseY;
-    waypoints[waypointID].relation = {};
 
-    var cir = createCirlce(mouseX,mouseY,waypointID,show)
+    waypoint = {};
+    waypoint.x = mouseX - 1280;
+    waypoint.y = 1280 - mouseY;
+    waypoint.relation = {};
 
-    ++waypointID;
+    var cir = createCirlce(mouseX,mouseY,waypoints.length,show)
+
+    waypoints.push(waypoint);
 
     return cir;
 }
@@ -415,7 +397,7 @@ function clearCanvas(clearTrack)
     polygons = [];
 
     if(clearTrack)
-        waypoints = {};
+        waypoints = [];
 }
 
 function clearLines()
@@ -442,29 +424,32 @@ function track(track)
 {
     canvasDiv.style.backgroundImage = "url(http://img.lfs.net/remote/maps/"+track+".jpg)";
     clearCanvas();
-    loadWaypoints(track);
+    //loadWaypoints(track);
     return false;
 }
 
-function getDistance(activeCircleFrom, activeCircleTo)
+function getDistance(start, end)
 {
-    return Math.sqrt( Math.pow(activeCircleTo.center.x-activeCircleFrom.center.x,2) +  Math.pow(activeCircleTo.center.y-activeCircleFrom.center.y,2))
+    return Math.sqrt( Math.pow(waypoints[start].x-waypoints[end].x,2) +  Math.pow(waypoints[start].y-waypoints[end].y,2))
 }
 
 function createRelation(start, end)
 {
-    if(typeof waypoints[start.id].relation[end.id] == 'undefined')
-        waypoints[start.id].relation[end.id] = getDistance(start, end);
+    startPoint = new jxPoint(1280 + waypoints[start].x, 1280 - waypoints[start].y);
+    endPoint = new jxPoint(1280 + waypoints[end].x, 1280 - waypoints[end].y);
 
-    if(typeof waypoints[end.id].relation[start.id] == 'undefined')
-        waypoints[end.id].relation[start.id] = getDistance(start, end);
+    if(typeof waypoints[start].relation[end] == 'undefined')
+        waypoints[start].relation[end] = getDistance(start, end);
+
+    if(typeof waypoints[end].relation[start] == 'undefined')
+        waypoints[end].relation[start] = getDistance(start, end);
     if(!tempLine)
-        tempLine = new jxLine(start.center,end.center, getPen(4));
+        tempLine = new jxLine(startPoint,endPoint, getPen(4));
 
-    tempLine.idFrom = start.id;
-    tempLine.idTo = end.id;
-    tempLine.fromPoint = start.center;
-    tempLine.toPoint = end.center;
+    tempLine.idFrom = start;
+    tempLine.idTo = end;
+    tempLine.fromPoint = startPoint;
+    tempLine.toPoint = endPoint;
     tempLine.addEventListener('click', LineMouseClick);
     tempLine.addEventListener('mouseover', LineMouseOver);
     tempLine.addEventListener('mouseout', LineMouseOut);
@@ -484,8 +469,8 @@ function createPath(startCircle, endCircle)
 
     for(var i in waypoints)
     {
-        tmpStartDist = getDistance(circles[i], startCircle);
-        tmpEndDist = getDistance(circles[i], endCircle);
+        tmpStartDist = getDistance(i, startCircle.id);
+        tmpEndDist = getDistance(i, endCircle.id);
 
         if(tmpStartDist <  minStartDist && i != startCircle.id)
         {
@@ -502,8 +487,8 @@ function createPath(startCircle, endCircle)
 
     if(minStartCirlce != null  && minEndCircle != null)
     {
-        createRelation(startCircle, circles[minStartCirlce]);
-        createRelation(endCircle, circles[minEndCircle]);
+        createRelation(startCircle.id, minStartCirlce);
+        createRelation(endCircle.id, minEndCircle);
     }
 
     for(var i in waypoints)
@@ -588,24 +573,45 @@ function createPath(startCircle, endCircle)
 
     for(var i = 0; i < path.length - 1; i++)
     {
-        createRelation(circles[path[i]],circles[path[i+1]]);
+        createRelation(path[i],path[i+1]);
     }
 }
 
 function loadWaypoints(track)
 {
-    waypoints = {}
+    waypoints = [];
     waypointID = 0;
 
-    $.get('waypoints_' + track + '.json',function(data){
-
-        waypoints = data.waypoints;
-        waypointID = data.waypointID;
+    $.get(track + '.json',function(data){
 
         for(var i in data.waypoints)
         {
-            createCirlce( 1280 + data.waypoints[i].x, 1280 - data.waypoints[i].y, i, false)
+            waypoints.push(data.waypoints[i])
+
         }
+
+        for(var i = 0; i < waypoints.length -1; i++)
+        {
+            //createCirlce( 1280 + data.waypoints[i].x, 1280 - data.waypoints[i].y, i, true)
+            createRelation(i, i+1)
+        }
+
+    },'json');
+}
+
+function save()
+{
+    data = {
+        waypoints: waypoints,
+        waypointID: waypointID
+    };
+
+    $.post('save.php',
+        {
+            waypoints: JSON.stringify(data,null,4),
+            track: $('#track').val()
+        },
+        function(){
 
     },'json');
 }
