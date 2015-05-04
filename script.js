@@ -1,3 +1,4 @@
+bLockMouse = false;
 mouseX = 0;
 mouseY = 0;
 mapSize = 2560;
@@ -145,7 +146,7 @@ $(function(){
                         startCircle = null;
                         endCircle = null;
 
-
+                        clearCircles();
                         clearLines()
                     }
                 }
@@ -159,6 +160,8 @@ $(function(){
 //Get mouse position
 function getMouseXY(e)
 {
+    if(bLockMouse)
+    return;
 
     if (document.all) //For IE
     {
@@ -250,7 +253,7 @@ function drawPoint(show)
 
 function createCirlce(x,y, ID, show)
 {
-    var cir = new jxCircle(new jxPoint(x,y), 10, getPen(), getBrush());
+    var cir = new jxCircle(new jxPoint(x,y), 5, getPen(), getBrush());
     cir.id = ID;
 
     if(show)
@@ -373,17 +376,12 @@ function drawLine()
 
 function clearCanvas(clearTrack)
 {
-    //gr.clear();
-
     for(i in rects)
     {
         rects[i].remove()
     }
 
-    for(i in circles)
-    {
-        circles[i].remove()
-    }
+
 
     for(i in polygons)
     {
@@ -391,9 +389,9 @@ function clearCanvas(clearTrack)
     }
 
     clearLines();
+    clearCircles();
 
     rects = [];
-    circles={};
     polygons = [];
 
     if(clearTrack)
@@ -407,6 +405,15 @@ function clearLines()
         lines[i].remove()
     }
     lines = [];
+}
+
+function clearCircles()
+{
+    for(i in circles)
+    {
+        circles[i].remove()
+    }
+    circles={};
 }
 
 function clearPreviousPoints()
@@ -424,7 +431,8 @@ function track(track)
 {
     canvasDiv.style.backgroundImage = "url(http://img.lfs.net/remote/maps/"+track+".jpg)";
     clearCanvas();
-    //loadWaypoints(track);
+    waypoints = [];
+    loadWaypoints(track);
     return false;
 }
 
@@ -461,31 +469,22 @@ function createRelation(start, end)
 function createPath(startID, endID)
 {
     var minStartDist = Infinity;
+    var startPoint = null;
+    var startRelations = [];
+
     var minEndDist = Infinity;
-    var minStartCirlce = null;
-    var minEndCircle = null;
+    var endPoint = null;
+    var endRelations = [];
+
     var matrix = [];
+
+
 
 
 
     for(var i in waypoints)
     {
-        tmpStartDist = getWaypointDistance(i, startID);
-        tmpEndDist = getWaypointDistance(i, endID);
-
-        if(tmpStartDist <  minStartDist && i != startID)
-        {
-            minStartDist = tmpStartDist;
-            minStartCirlce = i;
-        }
-
-        if(tmpEndDist <  minEndDist && i != endID)
-        {
-            minEndDist = tmpEndDist;
-            minEndCircle = i;
-        }
-
-        /*for(var j in waypoints[i].relation)
+        for(var j in waypoints[i].relation)
         {
             if(i != startID)
             {
@@ -493,48 +492,61 @@ function createPath(startID, endID)
 
                 if(isBelong(waypoints[i], waypoints[j], p))
                 {
-                    console.log(waypoints[startID])
-                    console.log(waypoints[i])
-                    console.log(waypoints[j])
-                    console.log(p);
+                    var tmpStartDist = getDistance(waypoints[startID], p);
 
-                    p.x = 1280 + p.x;
-                    p.y = 1280 - p.y;
-
-                    var p1 = new jxPoint(1280+waypoints[startID].x, 1280-waypoints[startID].y)
-                    var ps = new jxPoint(1280+waypoints[i].x, 1280-waypoints[i].y)
-                    var pe = new jxPoint(1280+waypoints[j].x, 1280-waypoints[j].y)
-
-                    var l =  new jxLine(p1, p, new jxPen(new jxColor('red'),'2px'));
-                    l.draw(gr)
-
-                    var l =  new jxLine(ps, pe, new jxPen(new jxColor('red'),'2px'));
-                    l.draw(gr)
-
-                    var cir = new jxCircle(p, 10, getPen(), getBrush());
-                    cir.draw(gr);
-
-                    return;
+                    if(tmpStartDist <  minStartDist)
+                    {
+                        minStartDist = tmpStartDist;
+                        startPoint = p;
+                        startRelations = [i,j];
+                    }
                 }
             }
 
-           *//* if(i != endID)
+            if(i != endID)
             {
                 var p = getProjection(waypoints[i], waypoints[j], waypoints[endID]);
-                p.x = 1280 - p.x;
-                p.y = 1280 + p.y;
 
-                var cir = new jxCircle(p, 10, getPen(), getBrush());
-                cir.draw(gr);
-            }*//*
-        }*/
+                if(isBelong(waypoints[i], waypoints[j], p))
+                {
+                    var tmpEndDist = getDistance(waypoints[endID], p);
+
+                    if(tmpEndDist <  minEndDist)
+                    {
+                        minEndDist = tmpEndDist;
+                        endPoint = p;
+                        endRelations = [i,j];
+                    }
+                }
+            }
+        }
     }
 
-    if(minStartCirlce != null  && minEndCircle != null)
+    if(startPoint != null  && endPoint != null)
     {
+        // start section
+        bLockMouse = true;
+        mouseX = 1280 + startPoint.x;
+        mouseY = 1280 - startPoint.y;
+        var sp = drawPoint(true);
+        bLockMouse = false;
 
-        createRelation(startID, minStartCirlce);
-        createRelation(endID, minEndCircle);
+        createRelation(startID, sp.id);
+        createRelation(sp.id, startRelations[0]);
+        createRelation(sp.id, startRelations[1]);
+
+        // end sections
+
+        // start section
+        bLockMouse = true;
+        mouseX = 1280 + endPoint.x;
+        mouseY = 1280 - endPoint.y;
+        var sp = drawPoint(true);
+        bLockMouse = false;
+
+        createRelation(endID, sp.id);
+        createRelation(sp.id, endRelations[0]);
+        createRelation(sp.id, endRelations[1]);
     }
 
     for(var i in waypoints)
@@ -614,8 +626,8 @@ function createPath(startID, endID)
     path.unshift(startID);
     path.push(endID);
 
-    console.log(path)
     clearLines();
+    clearCircles();
 
     for(var i = 0; i < path.length - 1; i++)
     {
@@ -632,12 +644,12 @@ function loadWaypoints(track)
 
         waypoints = data;
 
-        for(var i = 0; i < waypoints.length -1; i++)
+       /* for(var i = 0; i < waypoints.length; i++)
         {
-            //createCirlce( 1280 + data.waypoints[i].x, 1280 - data.waypoints[i].y, i, true)
+            createCirlce( 1280 + waypoints[i].x, 1280 - waypoints[i].y, i, true)
             for(j in waypoints[i].relation)
                 createRelation(i, j)
-        }
+        }*/
 
     },'json');
 }
@@ -697,8 +709,8 @@ function clone(obj) {
 function getProjection(A,B,C)
 {
     var k = (B.y - A.y)/(B.x - A.x);
-    var x = Math.ceil((k* A.x + C.x/k - A.y + C.y)/(k + 1/k));
-    var y = Math.ceil(k * (x - A.x) + A.y)
+    var x = (k* A.x + C.x/k - A.y + C.y)/(k + 1/k);
+    var y = k * (x - A.x) + A.y
     return new jxPoint(x, y);
 }
 
@@ -714,7 +726,6 @@ function isBelong(A,B,C)
     var lineAB = getDistance(A,B);
     var lineAC = getDistance(A,C);
     var lineBC = getDistance(B,C);
-    console.log(lineAB == lineAC + lineBC);
     return lineAB == lineAC + lineBC;
 }
 
