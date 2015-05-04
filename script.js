@@ -28,7 +28,7 @@ startCircle = null;
 endCircle = null;
 var tempWaypoints = null;
 tempLines = null;
-matrix = [];
+
 
 
 $(function(){
@@ -98,8 +98,8 @@ $(function(){
                 if (activeCircle)
                 {
                     for (var i in waypoints[activeCircle.id].relation) {
-                        waypoints[activeCircle.id].relation[i] = getDistance(activeCircle.id, i)
-                        waypoints[i].relation[activeCircle.id] = getDistance(activeCircle.id, i)
+                        waypoints[activeCircle.id].relation[i] = getWaypointDistance(activeCircle.id, i)
+                        waypoints[i].relation[activeCircle.id] = getWaypointDistance(activeCircle.id, i)
                     }
                 }
                 activeCircle = null;
@@ -147,9 +147,6 @@ $(function(){
 
 
                         clearLines()
-
-                        //tempWaypoints = waypoints.slice()
-                        //startCircle = drawPoint(true);
                     }
                 }
                 break;
@@ -431,9 +428,9 @@ function track(track)
     return false;
 }
 
-function getDistance(start, end)
+function getWaypointDistance(start, end)
 {
-    return Math.sqrt( Math.pow(waypoints[start].x-waypoints[end].x,2) +  Math.pow(waypoints[start].y-waypoints[end].y,2))
+    return getDistance(waypoints[start], waypoints[end]);
 }
 
 function createRelation(start, end)
@@ -442,10 +439,10 @@ function createRelation(start, end)
     endPoint = new jxPoint(1280 + waypoints[end].x, 1280 - waypoints[end].y);
 
     if(typeof waypoints[start].relation[end] == 'undefined')
-        waypoints[start].relation[end] = getDistance(start, end);
+        waypoints[start].relation[end] = getWaypointDistance(start, end);
 
     if(typeof waypoints[end].relation[start] == 'undefined')
-        waypoints[end].relation[start] = getDistance(start, end);
+        waypoints[end].relation[start] = getWaypointDistance(start, end);
     if(!tempLine)
         tempLine = new jxLine(startPoint,endPoint, getPen(4));
 
@@ -463,17 +460,18 @@ function createRelation(start, end)
 
 function createPath(startID, endID)
 {
-    minStartDist = Infinity;
-    minEndDist = Infinity;
-    minStartCirlce = null;
-    minEndCircle = null;
+    var minStartDist = Infinity;
+    var minEndDist = Infinity;
+    var minStartCirlce = null;
+    var minEndCircle = null;
+    var matrix = [];
 
 
 
     for(var i in waypoints)
     {
-        tmpStartDist = getDistance(i, startID);
-        tmpEndDist = getDistance(i, endID);
+        tmpStartDist = getWaypointDistance(i, startID);
+        tmpEndDist = getWaypointDistance(i, endID);
 
         if(tmpStartDist <  minStartDist && i != startID)
         {
@@ -486,17 +484,62 @@ function createPath(startID, endID)
             minEndDist = tmpEndDist;
             minEndCircle = i;
         }
+
+        /*for(var j in waypoints[i].relation)
+        {
+            if(i != startID)
+            {
+                var p = getProjection(waypoints[i], waypoints[j], waypoints[startID]);
+
+                if(isBelong(waypoints[i], waypoints[j], p))
+                {
+                    console.log(waypoints[startID])
+                    console.log(waypoints[i])
+                    console.log(waypoints[j])
+                    console.log(p);
+
+                    p.x = 1280 + p.x;
+                    p.y = 1280 - p.y;
+
+                    var p1 = new jxPoint(1280+waypoints[startID].x, 1280-waypoints[startID].y)
+                    var ps = new jxPoint(1280+waypoints[i].x, 1280-waypoints[i].y)
+                    var pe = new jxPoint(1280+waypoints[j].x, 1280-waypoints[j].y)
+
+                    var l =  new jxLine(p1, p, new jxPen(new jxColor('red'),'2px'));
+                    l.draw(gr)
+
+                    var l =  new jxLine(ps, pe, new jxPen(new jxColor('red'),'2px'));
+                    l.draw(gr)
+
+                    var cir = new jxCircle(p, 10, getPen(), getBrush());
+                    cir.draw(gr);
+
+                    return;
+                }
+            }
+
+           *//* if(i != endID)
+            {
+                var p = getProjection(waypoints[i], waypoints[j], waypoints[endID]);
+                p.x = 1280 - p.x;
+                p.y = 1280 + p.y;
+
+                var cir = new jxCircle(p, 10, getPen(), getBrush());
+                cir.draw(gr);
+            }*//*
+        }*/
     }
 
     if(minStartCirlce != null  && minEndCircle != null)
     {
+
         createRelation(startID, minStartCirlce);
         createRelation(endID, minEndCircle);
     }
 
     for(var i in waypoints)
     {
-        tempArray = [];
+        var tempArray = [];
         for(var j in waypoints)
         {
             if(typeof waypoints[i].relation[j] != 'undefined')
@@ -512,13 +555,13 @@ function createPath(startID, endID)
 
     //console.log(matrix)
 
-    flag = [] // метка посещаемости точки
+    var flag = [] // метка посещаемости точки
     var max = Infinity;
     var nmin = 0;
 
-    d = [];
-    p = [];
-    n = 1;
+    var d = [];
+    var p = [];
+    var n = 1;
 
     for(var i in matrix)
         flag[i] = true;
@@ -560,7 +603,7 @@ function createPath(startID, endID)
 
     var path = []
 
-    prom = p[endID]
+    var prom = p[endID]
     do
     {
         path.unshift(prom);
@@ -641,4 +684,47 @@ function clone(obj) {
     }
 
     throw new Error("Unable to copy obj! Its type isn't supported.");
+}
+
+
+/**
+ *
+ * @param A - jxPoint of line
+ * @param B - jxPoint of line
+ * @param C - jxPoint
+ * @returns {jxPoint}
+ */
+function getProjection(A,B,C)
+{
+    var k = (B.y - A.y)/(B.x - A.x);
+    var x = Math.ceil((k* A.x + C.x/k - A.y + C.y)/(k + 1/k));
+    var y = Math.ceil(k * (x - A.x) + A.y)
+    return new jxPoint(x, y);
+}
+
+/**
+ *
+ * @param A - jxPoint of line
+ * @param B - jxPoint of line
+ * @param C - jxPoint
+ * @returns {boolean}
+ */
+function isBelong(A,B,C)
+{
+    var lineAB = getDistance(A,B);
+    var lineAC = getDistance(A,C);
+    var lineBC = getDistance(B,C);
+    console.log(lineAB == lineAC + lineBC);
+    return lineAB == lineAC + lineBC;
+}
+
+/**
+ *
+ * @param A - jxPoint
+ * @param B - jxPoint
+ * @returns {number}
+ */
+function getDistance(A, B)
+{
+    return Math.sqrt( Math.pow(A.x-B.x,2) +  Math.pow(A.y-B.y,2));
 }
