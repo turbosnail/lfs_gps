@@ -708,6 +708,11 @@ function clone(obj) {
  */
 function getProjection(A,B,C)
 {
+    if (A.y == B.y)
+        return new jxPoint(C.x, A.y);
+    if (A.x == B.x)
+        return new jxPoint(A.x, C.y);
+        
     var k = (B.y - A.y)/(B.x - A.x);
     var x = (k* A.x + C.x/k - A.y + C.y)/(k + 1/k);
     var y = k * (x - A.x) + A.y
