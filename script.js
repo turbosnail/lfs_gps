@@ -560,11 +560,13 @@ function loadWaypoints(track) {
 
         waypoints = data;
 
-        /* for(var i = 0; i < waypoints.length; i++){
-        createCirlce( 1280 + waypoints[i].x, 1280 - waypoints[i].y, i, true)
-        for(j in waypoints[i].relation)
-        createRelation(i, j)
-        }*/
+		if ($('#show').checked()) {
+			for(var i = 0; i < waypoints.length; i++){
+				createCirlce( 1280 + waypoints[i].x, 1280 - waypoints[i].y, i, true)
+				for(j in waypoints[i].relation)
+					createRelation(i, j)
+			}
+		}
 
     }, 'json');
 }
