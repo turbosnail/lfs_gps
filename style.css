@@ -67,7 +67,9 @@ input {
     height: 25px;
     padding: 0 5px;
 }
-
+.control_block input[type=checkbox]{
+    height: 10px;
+}
 
 .output_block{
     position: fixed;
