@@ -560,7 +560,7 @@ function loadWaypoints(track) {
 
         waypoints = data;
 
-		if ($('#show').checked()) {
+		if ($("#show").is(":checked")) {
 			for(var i = 0; i < waypoints.length; i++){
 				createCirlce( 1280 + waypoints[i].x, 1280 - waypoints[i].y, i, true)
 				for(j in waypoints[i].relation)
