@@ -84,6 +84,8 @@ $(function () {
         case 'move_waypoints':
             drag = false;
             if (activeCircle) {
+				waypoints[activeCircle.id].x = mouseX - 1280;;
+				waypoints[activeCircle.id].y = 1280 - mouseY;
                 for (var i in waypoints[activeCircle.id].relation) {
                     waypoints[activeCircle.id].relation[i] = getWaypointDistance(activeCircle.id, i)
                         waypoints[i].relation[activeCircle.id] = getWaypointDistance(activeCircle.id, i)
