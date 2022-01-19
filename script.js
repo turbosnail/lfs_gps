@@ -84,8 +84,8 @@ $(function () {
         case 'move_waypoints':
             drag = false;
             if (activeCircle) {
-				waypoints[activeCircle.id].x = mouseX - 1280;;
-				waypoints[activeCircle.id].y = 1280 - mouseY;
+                waypoints[activeCircle.id].x = mouseX - 1280; ;
+                waypoints[activeCircle.id].y = 1280 - mouseY;
                 for (var i in waypoints[activeCircle.id].relation) {
                     waypoints[activeCircle.id].relation[i] = getWaypointDistance(activeCircle.id, i)
                         waypoints[i].relation[activeCircle.id] = getWaypointDistance(activeCircle.id, i)
@@ -108,15 +108,20 @@ $(function () {
             }
             break;
         case 'path':
+            // first click at map
             if (!startCircle) {
+                // we backup original waypoints because
+                // at this point we add temporary waypoint
                 tempWaypoints = clone(waypoints);
 
                 startCircle = drawPoint(true);
             } else {
+                // second click at map
                 if (!endCircle) {
                     endCircle = drawPoint(true);
+                    // after add 2 temporary points we create path
                     createPath(startCircle.id, endCircle.id);
-
+                    // after create path we restore original waypoints
                     waypoints = clone(tempWaypoints)
                 } else {
                     startCircle.remove();
@@ -394,6 +399,7 @@ function createRelation(start, end) {
 
     if (typeof waypoints[end].relation[start] == 'undefined')
         waypoints[end].relation[start] = getWaypointDistance(start, end);
+
     if (!tempLine)
         tempLine = new jxLine(startPoint, endPoint, getPen(4));
 
@@ -409,6 +415,12 @@ function createRelation(start, end) {
     tempLine = null;
 }
 
+/**
+ *	@brief create path from two temporary points
+ *	@param startID waypoint - first point seted on map
+ *	@param endID   waypoint - second point seted on map
+ *
+ */
 function createPath(startID, endID) {
     var minStartDist = Infinity;
     var startPoint = null;
@@ -420,6 +432,7 @@ function createPath(startID, endID) {
 
     var matrix = [];
 
+    // search for shortest projection of start and end points on lines
     for (var i in waypoints) {
         for (var j in waypoints[i].relation) {
             if (i != startID) {
@@ -432,6 +445,7 @@ function createPath(startID, endID) {
                 if (tmpStartDist < minStartDist) {
                     minStartDist = tmpStartDist;
                     startPoint = p;
+                    // start line
                     startRelations = [i, j];
                 }
             }
@@ -446,6 +460,7 @@ function createPath(startID, endID) {
                 if (tmpEndDist < minEndDist) {
                     minEndDist = tmpEndDist;
                     endPoint = p;
+                    // end line
                     endRelations = [i, j];
                 }
             }
@@ -453,7 +468,7 @@ function createPath(startID, endID) {
     }
 
     if (startPoint != null && endPoint != null) {
-        // start section
+        // create lines from start point to projection of start point to line
         bLockMouse = true;
         mouseX = 1280 + startPoint.x;
         mouseY = 1280 - startPoint.y;
@@ -464,9 +479,7 @@ function createPath(startID, endID) {
         createRelation(sp.id, startRelations[0]);
         createRelation(sp.id, startRelations[1]);
 
-        // end sections
-
-        // start section
+        // create lines from end point to projection of end point to line
         bLockMouse = true;
         mouseX = 1280 + endPoint.x;
         mouseY = 1280 - endPoint.y;
@@ -478,6 +491,7 @@ function createPath(startID, endID) {
         createRelation(sp.id, endRelations[1]);
     }
 
+    // now make temporary array with distances of all points
     for (var i in waypoints) {
         var tempArray = [];
         for (var j in waypoints) {
@@ -492,7 +506,8 @@ function createPath(startID, endID) {
         matrix[i] = tempArray
     }
 
-    //console.log(matrix)
+    // this part from internet
+	// at this part we goes for each point and find shortest way in math graph
 
     var flag = []// метка посещаемости точки
     var max = Infinity;
@@ -505,45 +520,48 @@ function createPath(startID, endID) {
     for (var i in matrix)
         flag[i] = true;
 
-    var l = startID
+    var l = startID;
 
-        for (var i in matrix)
-            d[i] = matrix[l][i]
+    for (var i in matrix)
+        d[i] = matrix[l][i];
 
-                flag[l] = false
+    flag[l] = false;
 
-                for (var i in matrix) {
-                    max = Infinity;
-                    nmin = l;
+    for (var i in matrix) {
+        max = Infinity;
+        nmin = l;
 
-                    for (var j in matrix) {
-                        if (flag[j] && max > d[j]) {
-                            max = d[j];
-                            nmin = j;
-                        }
-                    }
+        for (var j in matrix) {
+            if (flag[j] && max > d[j]) {
+                max = d[j];
+                nmin = j;
+            }
+        }
 
-                    l = nmin;
-                    flag[l] = false;
+        l = nmin;
+        flag[l] = false;
 
-                    for (var j in matrix) {
-                        if (flag[j] && d[j] > (matrix[l][j] + d[l])) {
-                            d[j] = matrix[l][j] + d[l];
-                            p[j] = parseInt(l);
-                        }
-                    }
+        for (var j in matrix) {
+            if (flag[j] && d[j] > (matrix[l][j] + d[l])) {
+                d[j] = matrix[l][j] + d[l];
+                p[j] = parseInt(l);
+            }
+        }
 
-                }
+    }
 
-                var path = []
+    var path = [];
 
-                var prom = p[endID]
-                do {
-                    path.unshift(prom);
-                    prom = p[prom];
-                } while (prom != null);
+    var prom = p[endID];
 
-        path.unshift(startID);
+    do {
+        path.unshift(prom);
+        prom = p[prom];
+    } while (prom != null);
+	
+	// add start point id to start of array
+    path.unshift(startID);
+	// add end point id to end of array
     path.push(endID);
 
     clearLines();
@@ -562,13 +580,13 @@ function loadWaypoints(track) {
 
         waypoints = data;
 
-		if ($("#show").is(":checked")) {
-			for(var i = 0; i < waypoints.length; i++){
-				createCirlce( 1280 + waypoints[i].x, 1280 - waypoints[i].y, i, true)
-				for(j in waypoints[i].relation)
-					createRelation(i, j)
-			}
-		}
+        if ($("#show").is(":checked")) {
+            for (var i = 0; i < waypoints.length; i++) {
+                createCirlce(1280 + waypoints[i].x, 1280 - waypoints[i].y, i, true)
+                for (j in waypoints[i].relation)
+                    createRelation(i, j)
+            }
+        }
 
     }, 'json');
 }
